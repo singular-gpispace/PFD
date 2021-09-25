@@ -24,6 +24,7 @@
 
   <struct name="term_count_type">
     <field name="computing" type="unsigned int"/>
+    <field name="total" type="unsigned int"/>
     <field name="id" type="unsigned int"/>
   </struct>
 
