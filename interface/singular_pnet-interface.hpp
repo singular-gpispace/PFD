@@ -153,7 +153,6 @@ namespace singular_parallel
     NO_NAME_MANGLING
       void  pfd_fork_finish
       ( unsigned int const& id
-      , unsigned int const& term_id
       , const pnet_options& options
       , const std::string& step
       );

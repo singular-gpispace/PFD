@@ -33,7 +33,6 @@ namespace singular_parallel
     NO_NAME_MANGLING
       void pfd_fork_compute_term_
       ( const unsigned int& id
-      , const unsigned int& term_id
       , const pnet_options& options
       , const std::string step
       , const std::string from_file
@@ -460,15 +459,23 @@ namespace singular_parallel
         write_current_time(time_path);
 
         std::string file(get_from_name(step));
+        std::string from_filepath( options.tmpdir + "/" + file + "_" +
+                                   std::to_string(id)
+                                   + "_" +
+                                   std::to_string(term_id)
+                                   + ".ssi");
+        std::string to_filepath( options.tmpdir + "/" + file + "_result_" +
+                                 std::to_string(id)
+                                 + "_" +
+                                 std::to_string(term_id)
+                                 + ".ssi");
         pfd_fork_compute_term_( id
-                             , term_id
                              , options
                              , step
-                             , file
-                             , file + "_result"
+                             , from_filepath
+                             , to_filepath
                              );
-        remove((options.tmpdir + "/" + file + "_" + std::to_string(id) +
-                        "_" + std::to_string(term_id) + ".ssi").c_str());
+        remove(from_filepath.c_str());
 
         long duration( get_duration_time(time_path) );
         write_duration_time ( duration , time_path);
@@ -479,11 +486,10 @@ namespace singular_parallel
     NO_NAME_MANGLING
       void pfd_fork_compute_term_
       ( const unsigned int& id
-      , const unsigned int& term_id
       , const pnet_options& options
       , const std::string step
-      , const std::string from_file
-      , const std::string to_file
+      , const std::string from_filepath
+      , const std::string to_filepath
       )
       {
         init_singular ();
@@ -493,13 +499,13 @@ namespace singular_parallel
         singular::register_struct(options.out_struct_name,
                                   options.out_struct_desc);
         singular::load_library (options.needed_library);
+
         boost::format command =
-              boost::format("pfd_fork_compute_term(%1%, %2%, %3%, %4%, %5%, %6%);")
+              boost::format("pfd_fork_compute_term(%1%, %2%, %3%, %4%, %5%);")
                             % id
-                            % term_id
                             % ("\"" + step + "\"")
-                            % ("\"" + from_file + "\"")
-                            % ("\"" + to_file + "\"")
+                            % ("\"" + from_filepath + "\"")
+                            % ("\"" + to_filepath + "\"")
                             % ("\"" + options.tmpdir + "\"");
 
         singular::call_and_discard(command.str());
@@ -515,7 +521,24 @@ namespace singular_parallel
       )
       {
         unsigned int i;
+        long total_time = 0;
+        long merge_time = 0;
         std::string file = get_from_name(step);
+        std::string term_time_path;
+        std::string merge_time_path( get_problem_time_path( id
+                                                          , "fork_merge" + step
+                                                          , options.tmpdir
+                                                          )
+                                   );
+        std::string compute_merge_time_path(
+                                             get_problem_time_path( id
+                                                          , "fork_compute_merge"
+                                                              + step
+                                                          , options.tmpdir
+                                                          )
+                                           );
+        write_current_time(merge_time_path);
+
         init_singular ();
 
         singular::register_struct(options.in_struct_name,
@@ -538,7 +561,15 @@ namespace singular_parallel
           remove((options.tmpdir + "/" + file + "_result_" +
                        std::to_string(id) + "_" + std::to_string(i) +
                        ".ssi").c_str());
+          term_time_path = get_term_time_path( id
+                                             , i
+                                             , "fork_compute_" + step
+                                             , options.tmpdir);
+          total_time += get_written_time(term_time_path);
         }
+
+        merge_time = get_duration_time(merge_time_path);
+        write_duration_time(total_time + merge_time, compute_merge_time_path);
       }
 
     NO_NAME_MANGLING
@@ -600,16 +631,14 @@ namespace singular_parallel
     NO_NAME_MANGLING
       void pfd_fork_finish
       ( unsigned int const& id
-      , unsigned int const& term_id
       , const pnet_options& options
       , const std::string& step
       )
       {
         //get times until now
         std::string computed_time_path(
-            get_term_time_path( id
-                              , term_id
-                              , "fork_compute_" + step
+            get_problem_time_path( id
+                              , "fork_compute_merge" + step
                               , options.tmpdir) );
         std::string init_time_path(
             get_problem_time_path( id
@@ -629,23 +658,21 @@ namespace singular_parallel
         std::string from_name(get_from_name(step));
         std::string to_name(get_to_name(step));
 
-        /*
-        */
-        pfd_fork_compute_term_( id
-                              , term_id
-                              , options
-                              , step
-                              , from_name + "_result"
-                              , from_name + "_result"
-                              );
-
-        std::string from_file(options.tmpdir + "/" + from_name + "_result_" +
-                       std::to_string(id) + "_" + std::to_string(term_id) +
+        std::string from_file(options.tmpdir + "/" + from_name + "_dec_" +
+                       std::to_string(id)  +
                        ".ssi");
 
         std::string to_file(options.tmpdir + "/" + to_name +
                                                "_" + std::to_string(id) +
                                                ".ssi");
+        /*
+        */
+        pfd_fork_compute_term_( id
+                              , options
+                              , step
+                              , from_file
+                              , from_file
+                              );
 
         if (rename(from_file.c_str(), to_file.c_str()))
         {

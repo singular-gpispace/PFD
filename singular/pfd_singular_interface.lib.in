@@ -344,10 +344,9 @@ proc pfd_split_terms(int id,
 }
 
 proc pfd_fork_compute_term( int id
-                          , int term_id
                           , string step
-                          , string in_filename
-                          , string out_filename
+                          , string in_filepath
+                          , string out_filepath
                           , string tmpdir
                           , list #
                           )
@@ -359,24 +358,18 @@ proc pfd_fork_compute_term( int id
   int debug=0;
   link l=":w ";
 
-  list terms = read("ssi:r " + tmpdir + "/" + in_filename + "_" +
-          string(id) + "_" + string(term_id) + ".ssi");
+  list terms = read("ssi:r " + in_filepath);
   list input = read("ssi:r " + tmpdir + "/input_" + string(id) + ".ssi");
   ideal q = input[1];
 
-  //if ((size(terms) > 1) or (size(terms) < 1)) {
   if (size(terms) < 1) {
     ERROR("Expected at least one term, got " + string(size(terms)) +
           " instead.  Check for error in term split process.");
   }
 
   terms = generic_dec_loop(step, get_loop_strat(step), terms, q, debug, l);
-  //ERROR(step " seems to compute");
 
-  write("ssi:w " + tmpdir +
-                   "/" + out_filename + "_" +
-                   string(id) + "_" + string(term_id) +
-                   ".ssi", terms);
+  write("ssi:w " + out_filepath, terms);
 }
 
 
@@ -388,10 +381,7 @@ proc pfd_fork_merge( int id
                    )
 {
   int i;
-  list dec = read("ssi:r " + tmpdir +
-                             "/" + filename + "_dec_" +
-                             string(id) +
-                             ".ssi");
+  list dec = list();
 
   for (i = 1; i <= term_count; i++) {
     list result = read("ssi:r " + tmpdir +
