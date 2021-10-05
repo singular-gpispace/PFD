@@ -95,6 +95,20 @@ namespace singular_parallel
       );
 
     NO_NAME_MANGLING
+      void pfd_hand_back
+      ( unsigned int const& id
+      , const pnet_options& options
+      , const std::string& step
+      );
+
+    NO_NAME_MANGLING
+      void pfd_hand_forward
+      ( unsigned int const& id
+      , const pnet_options& options
+      , const std::string& step
+      );
+
+    NO_NAME_MANGLING
       void pfd_loop_compute_term
       ( const unsigned int& id
       , const unsigned int& term_id
@@ -151,7 +165,7 @@ namespace singular_parallel
       );
 
     NO_NAME_MANGLING
-      void  pfd_fork_finish
+      unsigned int pfd_fork_finish
       ( unsigned int const& id
       , unsigned int const& term_id
       , const pnet_options& options
@@ -203,6 +217,33 @@ namespace singular_parallel
       , const pnet_options& options
       , const std::string& measure_name
       , const long& duration
+      );
+
+    NO_NAME_MANGLING
+      int pfd_fork_compare_tdegrees
+      ( singular_parallel::pnet_list left
+      , singular_parallel::pnet_list right
+      );
+
+    NO_NAME_MANGLING
+      singular_parallel::pnet_list pfd_fork_get_tdegrees_before
+      ( unsigned int const& id
+      , const std::string& step
+      , const pnet_options& options
+      );
+
+    NO_NAME_MANGLING
+      singular_parallel::pnet_list pfd_fork_get_tdegrees_after
+      ( unsigned int const& id
+      , const std::string& step
+      , const pnet_options& options
+      );
+
+    NO_NAME_MANGLING
+      singular_parallel::pnet_list pfd_fork_get_tdegrees_file
+      ( unsigned int const& id
+      , const std::string& file
+      , const pnet_options& options
       );
   }
 }
